@@ -2,7 +2,7 @@ name: Build and deploy .NET application to container app azureicons-app-20231006
 on:
   push:
     branches:
-    - main
+    - master
 env:
   CONTAINER_APP_CONTAINER_NAME: azureicons
   CONTAINER_APP_NAME: azureicons-app-20231006023942
