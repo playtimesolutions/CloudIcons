@@ -3,9 +3,17 @@
 @using System.Text.RegularExpressions;
 @inject IJSRuntime JSRuntime
 
-<input @bind="searchTerm" @onkeydown="@(e => HandleKeyDown(e))" placeholder="Search..." />
-<button @onclick="Search">Search</button>
-<input type="checkbox" @bind="DownloadAsPng" /> Download as PNG
+<div class="search-container">
+    <input type="text" @bind="searchTerm" @onkeydown="@(e => HandleKeyDown(e))" placeholder="Database" />
+    <button class="search-button" @onclick="Search">Search</button>
+</div>
+
+
+
+<div>
+    <input type="checkbox" id="downloadAsPng" @bind="DownloadAsPng" />
+    <label for="downloadAsPng">Download as PNG</label>
+</div>
 
 <div class="svg-grid">
     @{
@@ -42,6 +50,7 @@
 </div>
 
 <button @onclick="LoadMore" style="display: @(hasMoreToLoad ? "block" : "none")">Load More</button>
+
 
 @code {
     [Parameter] public string Tab { get; set; } = string.Empty;
