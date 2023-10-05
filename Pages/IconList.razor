@@ -6,16 +6,23 @@
 <button @onclick="Search">Search</button>
 
 <div class="svg-grid">
-    @foreach (var svg in filteredSvgs)
+    @if (filteredSvgs.Count > 0)
     {
-        <div class="svg-item-wrapper">
-            <a href="@svg.Path" download="@svg.Name">
-                <div class="svg-item">
-                    <img src="@svg.Path" alt="@svg.Name" style="min-width:180px;" />
-                </div>
-            </a>
-            <p>@(svg.Name.Length > 32 ? svg.Name.Substring(0, 32) + "..." : svg.Name)</p>
-        </div>
+        @foreach (var svg in filteredSvgs)
+        {
+            <div class="svg-item-wrapper">
+                <a href="@svg.Path" download="@svg.Name">
+                    <div class="svg-item">
+                        <img src="@svg.Path" alt="@svg.Name" style="min-width:180px;" />
+                    </div>
+                </a>
+                <p>@(svg.Name.Length > 32 ? svg.Name.Substring(0, 32) + "..." : svg.Name)</p>
+            </div>
+        }
+    }
+    else
+    {
+    <p>No results found</p>
     }
 </div>
 
@@ -48,16 +55,21 @@
         svgFiles = svgFiles.Skip(svgs.Count).Take(loadCount);
 
         var loadTasks = svgFiles.Select(async svgFile =>
-        {
-            var fileName = Path.GetFileNameWithoutExtension(svgFile);
+         {
+             var fileName = Path.GetFileNameWithoutExtension(svgFile);
 
-            var match = Regex.Match(fileName, @"^\d{5}-icon-service-(.+)$");
-            var humanReadableName = match.Success ? match.Groups[1].Value.Replace("-", " ") : fileName.Replace("-", " ");
+             var match = Regex.Match(fileName, @"^\d{5}-icon-service-(.+)$");
+             var humanReadableName = match.Success ? match.Groups[1].Value.Replace("-", " ") : fileName.Replace("-", " ");
 
-            humanReadableName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(humanReadableName);
+             // Modify this line to remove the trailing "_48_Regular" or "_48_Color"
+             humanReadableName = Regex.Replace(humanReadableName, "_48_(Regular|Color)$", string.Empty, RegexOptions.IgnoreCase);
 
-            return new SvgFile { Path = svgFile.Replace("wwwroot", ""), Name = humanReadableName };
-        });
+               humanReadableName = humanReadableName.Replace("_", " "); 
+
+             humanReadableName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(humanReadableName);
+
+             return new SvgFile { Path = svgFile.Replace("wwwroot", ""), Name = humanReadableName };
+         });
 
         var newSvgs = await Task.WhenAll(loadTasks);
 
