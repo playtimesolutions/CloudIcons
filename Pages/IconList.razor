@@ -1,0 +1,86 @@
+﻿@page "/iconlist/{Tab}"
+@using System.Globalization;
+@using System.Text.RegularExpressions;
+
+
+
+<input @bind="searchTerm" placeholder="Search..." />
+<button @onclick="Search">Search</button>
+
+<div class="svg-grid">
+    @foreach (var svg in filteredSvgs)
+    {
+
+        <a href="@svg.Path" download="@svg.Name">
+        <div class="svg-item">
+                <img src="@svg.Path" alt="@svg.Name" style="min-width:180px;" />
+                <p>@(svg.Name.Length > 32 ? svg.Name.Substring(0, 32) + "..." : svg.Name)</p>
+            </div>
+        </a>
+    }
+</div>
+
+<button @onclick="LoadMore">Load More</button>
+
+@code {
+    [Parameter] public string Tab { get; set; } = string.Empty;
+
+    private string searchTerm = string.Empty;
+    private List<SvgFile> svgs = new List<SvgFile>();
+    private List<SvgFile> filteredSvgs = new List<SvgFile>();
+    private int loadCount = 20;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        svgs.Clear();
+        await LoadSvgs();
+    }
+
+    private async Task LoadSvgs()
+    {
+        var svgFiles = Directory.EnumerateFiles($"wwwroot/icons/{Tab}", "*.svg", SearchOption.AllDirectories)
+                                .Skip(svgs.Count)
+                                .Take(loadCount);
+
+        var loadTasks = svgFiles.Select(async svgFile =>
+        {
+            var fileName = Path.GetFileNameWithoutExtension(svgFile);
+
+            // Use regular expression to match the pattern and extract the required part
+            var match = Regex.Match(fileName, @"^\d{5}-icon-service-(.+)$");
+            var humanReadableName = match.Success ? match.Groups[1].Value.Replace("-", " ") : fileName.Replace("-", " ");
+
+            humanReadableName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(humanReadableName);
+
+            return new SvgFile { Path = svgFile.Replace("wwwroot", ""), Name = humanReadableName };
+        });
+
+        var newSvgs = await Task.WhenAll(loadTasks);
+
+        svgs.AddRange(newSvgs);
+        filteredSvgs = svgs;
+    }
+
+    private void Search()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filteredSvgs = svgs;
+        }
+        else
+        {
+            filteredSvgs = svgs.Where(svg => svg.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+    }
+
+    private async Task LoadMore()
+    {
+        await LoadSvgs();
+    }
+
+    private class SvgFile
+    {
+        public string Path { get; set; }
+        public string Name { get; set; }
+    }
+}
