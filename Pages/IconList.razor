@@ -2,9 +2,7 @@
 @using System.Globalization;
 @using System.Text.RegularExpressions;
 
-
-
-<input @bind="searchTerm" placeholder="Search..." />
+<input @bind="searchTerm" @onkeydown="@(e => HandleKeyDown(e))" placeholder="Search..." />
 <button @onclick="Search">Search</button>
 
 <div class="svg-grid">
@@ -21,9 +19,7 @@
     }
 </div>
 
-
-
-<button @onclick="LoadMore">Load More</button>
+<button @onclick="LoadMore" style="display: @(hasMoreToLoad ? "block" : "none")">Load More</button>
 
 @code {
     [Parameter] public string Tab { get; set; } = string.Empty;
@@ -32,6 +28,7 @@
     private List<SvgFile> svgs = new List<SvgFile>();
     private List<SvgFile> filteredSvgs = new List<SvgFile>();
     private int loadCount = 20;
+    private bool hasMoreToLoad = true;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -39,17 +36,21 @@
         await LoadSvgs();
     }
 
-    private async Task LoadSvgs()
+    private async Task LoadSvgs(string searchTerm = null)
     {
-        var svgFiles = Directory.EnumerateFiles($"wwwroot/icons/{Tab}", "*.svg", SearchOption.AllDirectories)
-                                .Skip(svgs.Count)
-                                .Take(loadCount);
+        var svgFiles = Directory.EnumerateFiles($"wwwroot/icons/{Tab}", "*.svg", SearchOption.AllDirectories);
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            svgFiles = svgFiles.Where(file => file.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+
+        svgFiles = svgFiles.Skip(svgs.Count).Take(loadCount);
 
         var loadTasks = svgFiles.Select(async svgFile =>
         {
             var fileName = Path.GetFileNameWithoutExtension(svgFile);
 
-            // Use regular expression to match the pattern and extract the required part
             var match = Regex.Match(fileName, @"^\d{5}-icon-service-(.+)$");
             var humanReadableName = match.Success ? match.Groups[1].Value.Replace("-", " ") : fileName.Replace("-", " ");
 
@@ -60,25 +61,30 @@
 
         var newSvgs = await Task.WhenAll(loadTasks);
 
+        hasMoreToLoad = newSvgs.Length == loadCount;
+
         svgs.AddRange(newSvgs);
         filteredSvgs = svgs;
     }
 
-    private void Search()
+    async void HandleKeyDown(KeyboardEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(searchTerm))
+        if (e.Key == "Enter")
         {
-            filteredSvgs = svgs;
+            await Search();
         }
-        else
-        {
-            filteredSvgs = svgs.Where(svg => svg.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
-        }
+    }
+
+    private async Task Search()
+    {
+        svgs.Clear();
+        await LoadSvgs(searchTerm);
+        StateHasChanged();
     }
 
     private async Task LoadMore()
     {
-        await LoadSvgs();
+        await LoadSvgs(searchTerm);
     }
 
     private class SvgFile
