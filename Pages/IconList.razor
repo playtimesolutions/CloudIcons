@@ -1,28 +1,43 @@
 ﻿@page "/iconlist/{Tab}"
 @using System.Globalization;
 @using System.Text.RegularExpressions;
+@inject IJSRuntime JSRuntime
 
 <input @bind="searchTerm" @onkeydown="@(e => HandleKeyDown(e))" placeholder="Search..." />
 <button @onclick="Search">Search</button>
+<input type="checkbox" @bind="DownloadAsPng" /> Download as PNG
 
 <div class="svg-grid">
+    @{
+        var index = 0;
+    }
     @if (filteredSvgs.Count > 0)
     {
         @foreach (var svg in filteredSvgs)
         {
             <div class="svg-item-wrapper">
-                <a href="@svg.Path" download="@svg.Name">
-                    <div class="svg-item">
-                        <img src="@svg.Path" alt="@svg.Name" style="min-width:180px;" />
-                    </div>
-                </a>
+                <div class="svg-item">
+                    @if (DownloadAsPng)
+                    {
+                        var svgId = $"mySvg{index++}";
+                        <a @onclick="() => OnDownloadRequested(svgId)">
+                            <img id="@svgId" src="@svg.Path" alt="@svg.Name" style="min-width:180px;" />
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="@svg.Path" download="@svg.Name">
+                            <img id="mySvg" src="@svg.Path" alt="@svg.Name" style="min-width:180px;" />
+                        </a>
+                    }
+                </div>
                 <p>@(svg.Name.Length > 32 ? svg.Name.Substring(0, 32) + "..." : svg.Name)</p>
             </div>
         }
     }
     else
     {
-    <p>No results found</p>
+        <p>No results found</p>
     }
 </div>
 
@@ -36,6 +51,7 @@
     private List<SvgFile> filteredSvgs = new List<SvgFile>();
     private int loadCount = 20;
     private bool hasMoreToLoad = true;
+    private bool DownloadAsPng { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -61,10 +77,9 @@
              var match = Regex.Match(fileName, @"^\d{5}-icon-service-(.+)$");
              var humanReadableName = match.Success ? match.Groups[1].Value.Replace("-", " ") : fileName.Replace("-", " ");
 
-             // Modify this line to remove the trailing "_48_Regular" or "_48_Color"
              humanReadableName = Regex.Replace(humanReadableName, "_48_(Regular|Color)$", string.Empty, RegexOptions.IgnoreCase);
 
-               humanReadableName = humanReadableName.Replace("_", " "); 
+             humanReadableName = humanReadableName.Replace("_", " ");
 
              humanReadableName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(humanReadableName);
 
@@ -97,6 +112,19 @@
     private async Task LoadMore()
     {
         await LoadSvgs(searchTerm);
+    }
+
+    private async Task OnDownloadRequested(string svgId)
+    {
+        if (DownloadAsPng)
+        {
+            await StartDownloadAsPng(svgId);
+        }
+    }
+
+    private async Task StartDownloadAsPng(string svgId)
+    {
+        await JSRuntime.InvokeVoidAsync("downloadAsPng", svgId);
     }
 
     private class SvgFile
