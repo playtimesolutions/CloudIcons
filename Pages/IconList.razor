@@ -10,15 +10,18 @@
 <div class="svg-grid">
     @foreach (var svg in filteredSvgs)
     {
-
-        <a href="@svg.Path" download="@svg.Name">
-        <div class="svg-item">
-                <img src="@svg.Path" alt="@svg.Name" style="min-width:180px;" />
-                <p>@(svg.Name.Length > 32 ? svg.Name.Substring(0, 32) + "..." : svg.Name)</p>
-            </div>
-        </a>
+        <div class="svg-item-wrapper">
+            <a href="@svg.Path" download="@svg.Name">
+                <div class="svg-item">
+                    <img src="@svg.Path" alt="@svg.Name" style="min-width:180px;" />
+                </div>
+            </a>
+            <p>@(svg.Name.Length > 32 ? svg.Name.Substring(0, 32) + "..." : svg.Name)</p>
+        </div>
     }
 </div>
+
+
 
 <button @onclick="LoadMore">Load More</button>
 
