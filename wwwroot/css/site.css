@@ -35,7 +35,7 @@ a, .btn-link {
 }
 
 .sidebar {
-    background: linear-gradient(to bottom, #008AD7, #45a049) !important;
+    background: linear-gradient(to bottom, #007bff, #45a049) !important;
     color: #ffffff !important;
 }
 
@@ -49,8 +49,8 @@ a, .btn-link {
         }
 
 .navbar {
-    background-color: #008AD7 !important;
-}
+    background-color: #007bff !important;
+}  
 
 
 #blazor-error-ui {
@@ -159,22 +159,6 @@ input[type="checkbox"] {
         display: inline-block;
         vertical-align: middle;
     }
-
-button {
-    display: block;
-    margin: 20px auto;
-    padding: 10px 20px;
-    background-color: #0071c1;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-    button:hover {
-        background-color: #005999;
-    }  
 
 .svg-item-wrapper {
     text-align: center;
