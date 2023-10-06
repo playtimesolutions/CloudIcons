@@ -38,5 +38,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## Contact
 
-Your Name - michael@datachain.consulting
+Michael John Peña - michael@datachain.consulting
 Project Link: https://github.com/mjtpena/AzureIcons
