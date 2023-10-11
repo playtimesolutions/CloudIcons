@@ -1,6 +1,4 @@
-I can help you revise your Md file. Here are some suggestions:
-
-# CloudIcons
+# Official Cloud Icons
 
 CloudIcons is a Blazor application that lets you download official icons for Azure, AWS, and GCP in SVG and PNG formats.
 
