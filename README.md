@@ -1,12 +1,14 @@
-# AzureIcons
+I can help you revise your Md file. Here are some suggestions:
 
-AzureIcons is a simple Blazor application that allows you to download Official Azure and other Microsoft icons in SVG and PNG formats. 
+# CloudIcons
+
+CloudIcons is a Blazor application that lets you download official icons for Azure, AWS, and GCP in SVG and PNG formats.
 
 ## Features
 
-- Download Official Azure and other Microsoft icons.
-- Supports both SVG and PNG formats.
-- User-friendly interface for easy navigation.
+- Download official icons for Azure, AWS, and GCP.
+- Choose between SVG and PNG formats.
+- Browse icons easily with a user-friendly interface.
 
 ## Getting Started
 
@@ -19,24 +21,24 @@ AzureIcons is a simple Blazor application that allows you to download Official A
 
 1. Clone the repo
 
-`git clone https://github.com/your_username_/AzureIcons.git`
+`git clone https://github.com/mjtpena/CloudIcons.git`
 
 2. Open the project in Visual Studio
 3. Run the project
 
 ## Usage
 
-Navigate through the application, select the desired icon, choose the format (SVG or PNG), and click on the download button.
+Select an icon, pick a format (SVG or PNG), and click on the download button.
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are welcome. Please open an issue first to discuss major changes.
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+This project is licensed under the MIT License. See `LICENSE` for more details.
 
 ## Contact
 
 Michael John Peña - michael@datachain.consulting
-Project Link: https://github.com/mjtpena/AzureIcons
+Project Link: https://github.com/mjtpena/CloudIcons
