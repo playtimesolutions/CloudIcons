@@ -80,20 +80,20 @@
         svgFiles = svgFiles.Skip(svgs.Count).Take(loadCount);
 
         var loadTasks = svgFiles.Select(async svgFile =>
-         {
-             var fileName = Path.GetFileNameWithoutExtension(svgFile);
+        {
+        var fileName = Path.GetFileNameWithoutExtension(svgFile);
+        var match = Regex.Match(fileName, @"^\d{5}-icon-service-(.+)$");
 
-             var match = Regex.Match(fileName, @"^\d{5}-icon-service-(.+)$");
-             var humanReadableName = match.Success ? match.Groups[1].Value.Replace("-", " ") : fileName.Replace("-", " ");
+        var humanReadableName = (match.Success ? match.Groups[1].Value.Replace("-", " ") : fileName.Replace("-", " "))
+            .Replace("_", " ");
 
-             humanReadableName = Regex.Replace(humanReadableName, "_48_(Regular|Color)$", string.Empty, RegexOptions.IgnoreCase);
+        humanReadableName = Regex.Replace(humanReadableName, "_48_(Regular|Color)$", string.Empty, RegexOptions.IgnoreCase);
+        humanReadableName = Regex.Replace(humanReadableName, @"\d+$", string.Empty).Trim();
 
-             humanReadableName = humanReadableName.Replace("_", " ");
+        humanReadableName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(humanReadableName);
 
-             humanReadableName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(humanReadableName);
-
-             return new SvgFile { Path = svgFile.Replace("wwwroot", ""), Name = humanReadableName };
-         });
+        return new SvgFile { Path = svgFile.Replace("wwwroot", ""), Name = humanReadableName };
+        });
 
         var newSvgs = await Task.WhenAll(loadTasks);
 
