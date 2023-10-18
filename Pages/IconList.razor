@@ -1,47 +1,58 @@
 ﻿@page "/iconlist/{Tab}"
 @using System.Globalization;
 @using System.Text.RegularExpressions;
+@using AzureIcons.Models;
 @inject IJSRuntime JSRuntime
 
 <div class="search-container">
-    <input type="text" @bind="searchTerm" @onkeydown="@(e => HandleKeyDown(e))" placeholder="Database" />
+    <input type="text" @bind="searchTerm" @onkeydown="@(e => HandleKeyDown(e))" placeholder="Database"/>
     <button class="search-button" @onclick="Search">Search</button>
 </div>
 
-
-
 <div>
-    <input type="checkbox" id="downloadAsPng" @bind="DownloadAsPng" />
+    <input type="checkbox" id="downloadAsPng" @bind="DownloadAsPng"/>
     <label for="downloadAsPng">Download as PNG</label>
 </div>
 
-<div class="svg-grid">
+<div class="svg-grid1" style="height:520px;overflow-y:scroll;overflow-x: hidden">
     @{
         var index = 0;
     }
     @if (filteredSvgs.Count > 0)
     {
-        @foreach (var svg in filteredSvgs)
-        {
-            <div class="svg-item-wrapper">
-                <div class="svg-item">
-                    @if (DownloadAsPng)
-                    {
-                        var svgId = $"mySvg{index++}";
-                        <a @onclick="() => OnDownloadRequested(svgId)">
-                            <img id="@svgId" src="@svg.Path" alt="@svg.Name" style="min-width:180px;" />
-                        </a>
-                    }
-                    else
-                    {
-                        <a href="@svg.Path" download="@svg.Name">
-                            <img id="mySvg" src="@svg.Path" alt="@svg.Name" style="min-width:180px;" />
-                        </a>
-                    }
-                </div>
-                <p>@(svg.Name.Length > 32 ? svg.Name.Substring(0, 32) + "..." : svg.Name)</p>
-            </div>
-        }
+        <div class="row">
+            <Virtualize ItemsProvider="@LoadIncremental" Context="svg" OverscanCount="5" @key="@revision">
+                <ItemContent>
+                    <div class="col-2 p-2 rounded-1 border-0">
+                        <div class="card border-0" style="width: 12rem;">
+                            @if (DownloadAsPng)
+                            {
+                                var svgId = $"mySvg{index++}";
+                                <a @onclick="() => OnDownloadRequested(svgId)">
+                                    <img id="@svgId" src="@svg.Path" alt="@svg.Name" class="img-thumbnail" style="border: none; min-width:180px;"/>
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="@svg.Path" download="@svg.Name">
+                                    <img id="mySvg" src="@svg.Path" alt="@svg.Name" class="img-thumbnail" style="border: none;min-width:180px;" />
+                                </a>
+                            }
+                            
+                            @* <img id="mySvg" src="@svg.Path" alt="@svg.Name" class="img-thumbnail"/> *@
+                            <div class="card-body">
+                                <p class="card-text"><small>@(svg.Name.Length > 24 ? svg.Name.Substring(0, 24) + "..." : svg.Name)</small></p>
+                            </div>
+                        </div>
+                    </div>
+                </ItemContent>
+                <Placeholder>
+                    <p>
+                        Loading...
+                    </p>
+                </Placeholder>
+            </Virtualize>
+        </div>
     }
     else
     {
@@ -49,96 +60,82 @@
     }
 </div>
 
-<button @onclick="LoadMore" style="display: @(hasMoreToLoad ? "block" : "none")">Load More</button>
-
-
 @code {
-    [Parameter] public string Tab { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Tab { get; set; } = string.Empty;
 
     private string searchTerm = string.Empty;
     private List<SvgFile> svgs = new List<SvgFile>();
     private List<SvgFile> filteredSvgs = new List<SvgFile>();
-    private int loadCount = 20;
-    private bool hasMoreToLoad = true;
     private bool DownloadAsPng { get; set; }
+    
+    int revision = 0;
 
     protected override async Task OnParametersSetAsync()
     {
+        filteredSvgs.Clear();
         svgs.Clear();
-        await LoadSvgs();
+        await LoadAllSvgs();
+        ++revision;
     }
 
-    private async Task LoadSvgs(string searchTerm = null)
+    private async ValueTask<ItemsProviderResult<SvgFile>> LoadIncremental(ItemsProviderRequest request)
+    {
+        var num = Math.Min(request.Count, svgs.Count - request.StartIndex);
+        filteredSvgs = svgs.Skip(request.StartIndex).Take(num).ToList();
+
+        return new ItemsProviderResult<SvgFile>(filteredSvgs, svgs.Count);
+    }
+
+    private async Task LoadAllSvgs()
     {
         var svgFiles = Directory.EnumerateFiles($"wwwroot/icons/{Tab}", "*.svg", SearchOption.AllDirectories);
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
-        {
             svgFiles = svgFiles.Where(file => file.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+        foreach (var svgFile in svgFiles)
+        {
+            var fileName = Path.GetFileNameWithoutExtension(svgFile);
+            var match = Regex.Match(fileName, @"^\d{5}-icon-service-(.+)$");
+
+            var humanReadableName = (match.Success ? match.Groups[1].Value.Replace("-", " ") : fileName.Replace("-", " "))
+                .Replace("_", " ");
+
+            humanReadableName = Regex.Replace(humanReadableName, "_48_(Regular|Color)$", string.Empty, RegexOptions.IgnoreCase);
+            humanReadableName = Regex.Replace(humanReadableName, @"\d+$", string.Empty).Trim();
+
+            humanReadableName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(humanReadableName);
+
+            svgs.Add(new SvgFile {Path = svgFile.Replace("wwwroot", ""), Name = humanReadableName});
         }
 
-        svgFiles = svgFiles.Skip(svgs.Count).Take(loadCount);
-
-        var loadTasks = svgFiles.Select(async svgFile =>
-        {
-        var fileName = Path.GetFileNameWithoutExtension(svgFile);
-        var match = Regex.Match(fileName, @"^\d{5}-icon-service-(.+)$");
-
-        var humanReadableName = (match.Success ? match.Groups[1].Value.Replace("-", " ") : fileName.Replace("-", " "))
-            .Replace("_", " ");
-
-        humanReadableName = Regex.Replace(humanReadableName, "_48_(Regular|Color)$", string.Empty, RegexOptions.IgnoreCase);
-        humanReadableName = Regex.Replace(humanReadableName, @"\d+$", string.Empty).Trim();
-
-        humanReadableName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(humanReadableName);
-
-        return new SvgFile { Path = svgFile.Replace("wwwroot", ""), Name = humanReadableName };
-        });
-
-        var newSvgs = await Task.WhenAll(loadTasks);
-
-        hasMoreToLoad = newSvgs.Length == loadCount;
-
-        svgs.AddRange(newSvgs);
         filteredSvgs = svgs;
     }
 
     async void HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
-        {
             await Search();
-        }
     }
 
     private async Task Search()
     {
         svgs.Clear();
-        await LoadSvgs(searchTerm);
+        filteredSvgs.Clear();
+        await LoadAllSvgs();
         StateHasChanged();
     }
-
-    private async Task LoadMore()
-    {
-        await LoadSvgs(searchTerm);
-    }
-
+    
     private async Task OnDownloadRequested(string svgId)
     {
         if (DownloadAsPng)
-        {
             await StartDownloadAsPng(svgId);
-        }
     }
 
     private async Task StartDownloadAsPng(string svgId)
     {
         await JSRuntime.InvokeVoidAsync("downloadAsPng", svgId);
-    }
-
-    private class SvgFile
-    {
-        public string Path { get; set; }
-        public string Name { get; set; }
     }
 }
