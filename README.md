@@ -39,5 +39,5 @@ This project is licensed under the MIT License. See `LICENSE` for more details.
 
 ## Contact
 
-Michael John Peña - michael@datachain.consulting
+Michael John Peña - michael.pena@playtimesolutions.com.au
 Project Link: https://github.com/mjtpena/CloudIcons
