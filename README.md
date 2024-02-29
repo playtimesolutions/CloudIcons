@@ -1,7 +1,6 @@
 # Official Cloud Icons
 
 CloudIcons is a Blazor application that lets you download official icons for Azure, AWS, and GCP in SVG and PNG formats.
-Officially joining as part of #hackoctoberfest
 
 ## Features
 
